@@ -1,7 +1,6 @@
 package tx.database.common.utils.string;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -78,11 +77,5 @@ public class SqlStringUtils {
 	    	result.add(m.group());
 	    }
 	    return result;
-	}
-	public static void main(String[] args) {
-		Set<String> set = new HashSet<String>();
-		set.add("admin");
-		set.add("test");
-		System.out.println(SqlStringUtils.addUpdate(set));
 	}
 }
