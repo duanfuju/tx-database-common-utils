@@ -43,3 +43,16 @@ TxSession.save 里面有两个参数,第一个要保存的表的名称,根据数
 `data.put("username", "zhang");`</br>
 `session.delete("hb_sys_users",data);`</br>
 这种删除数据的方式是根据其他列的属性来进行删除,比如上的这样的用sql表示就是`delete from hb_sys_users where username='zhang' and id='0'` 当然真正的不可能生成这样的sql,因为这样会引起SQL注入,生成的sql就是预编译的sql
+
+##### 第五步-> 获取当前连接池的状态
+C3P0States.getMaxPoolSize()        ->  获取当前连接池最大的连接数</br>
+C3P0States.getMinPoolSize()        ->  获取当前连接池最小连接数</br>
+C3P0States.getNumBusyConnections() ->  获取正在使用的连接数</br>
+C3P0States.getNumIdleConnections() ->  获取当前连接池最大的连接数</br>
+C3P0States.getNumConnections()     ->  获取总连接数</br>
+C3P0States.getJdbcUrl()            ->  获取用户JDBC的URL地址</br>
+C3P0States.getUser()               ->  获取数据库的用户名称</br>
+C3P0States.getDriverClass()        ->  获取数据库的驱动名称</br>
+
+
+
