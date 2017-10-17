@@ -1,4 +1,4 @@
-package tx.database.common.utils.ps;
+package tx.database.common.utils.string;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,7 +31,7 @@ public class PreparedStatementUtils {
 		}
 		ps = connection.prepareStatement(sql);
 		for(int i=0;i<str.size();i++) {
-			ps.setObject(i+1, parame.get(str.get(i)));
+			ps.setObject(i+1, parame.get(str.get(i).replace("$", "").replace("{", "").replace("}", "")));
 		}
 		return ps.executeQuery();
 	}
@@ -52,7 +52,7 @@ public class PreparedStatementUtils {
 			}
 			ps = connection.prepareStatement(sql);
 			for(int i=0;i<str.size();i++) {
-				ps.setObject(i+1, parame.get(str.get(i)));
+				ps.setObject(i+1, parame.get(str.get(i).replace("$", "").replace("{", "").replace("}", "")));
 			}
 			return ps.executeUpdate();
 		} finally {

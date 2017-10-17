@@ -9,7 +9,7 @@ import java.util.Map;
 import tx.database.common.utils.adapter.TxDBType;
 import tx.database.common.utils.entitys.QuerySqlResult;
 import tx.database.common.utils.interfaces.TxSession;
-import tx.database.common.utils.ps.PreparedStatementUtils;
+import tx.database.common.utils.string.PreparedStatementUtils;
 /**
  * TxSession的实现类,用来操作数据库
  * 
@@ -38,7 +38,7 @@ public class TxSessionImp implements TxSession {
 	@Override
 	public void save(String tablename, Map<String, Object> data) throws SQLException {
 		try {
-			QuerySqlResult qrs = select(String.format("selelct 1 from %s where id=${id}", tablename),data);
+			QuerySqlResult qrs = select(String.format("select 1 from %s where id=${id}", tablename),data);
 			if(qrs.getDatas().size() == 0) {
 				String sql = dbt.getInsertSql(tablename, data);
 				PreparedStatementUtils.executeUpdate(getConnection(), sql, data);

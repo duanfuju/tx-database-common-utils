@@ -2,7 +2,7 @@ package tx.database.common.utils.adapter;
 
 import java.util.Map;
 
-import tx.database.common.utils.ps.SqlStringUtils;
+import tx.database.common.utils.string.SqlStringUtils;
 
 public enum TxDBType {
 	mysql("mysql"),

@@ -1,6 +1,7 @@
 package test.tx.database.common.utils;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,9 +28,11 @@ public class TestTxSession {
 		parame.put("initialPoolSize", "10");
 		parame.put("maxIdleTime", "60");
 		parame.put("minPoolSize", "5");
+		parame.put("autoCommitOnClose", "true");
 		TxSessionFactory tsf = new TxSessionFactory(parame);
 		session = tsf.getTxSession();
 	}
+	//简单测试查询是否有效
 	@Test
 	public void testSelect() throws SQLException {
 		QuerySqlResult datas = session.select("select * from hb_sys_users", null);
@@ -43,17 +46,15 @@ public class TestTxSession {
 	synchronized public void setNumber(int number) {
 		this.number = number;
 	}
+	//测试多线程查询中是否会存在无法释放Session的BUG 
 	@Test
 	public void testMultithreadingSelect() throws SQLException{
 		for(int i=0;i<1000;i++) {
 		   Thread  t = new Thread() {
 				@Override
 				public void run() {
-					QuerySqlResult datas;
 					try {
-						datas = session.select("select * from hb_sys_users", null);
-						System.out.println(this.getName()+":"+datas.getDatas().size());
-						setNumber(getNumber()+1);
+						 testSelect();
 					} catch (SQLException e) {
 						e.printStackTrace();
 					}
@@ -63,5 +64,41 @@ public class TestTxSession {
 		}
 		while(true) {
 		}
+	}
+	@Test
+	public void testSave() throws SQLException {
+		Map<String,Object> data = new HashMap<String,Object>();
+		data.put("id", "0");
+		data.put("username", "zhang");
+		session.save("hb_sys_users",data );
+		QuerySqlResult datas = session.select("select * from hb_sys_users", null);
+		String username = (String) datas.getDatas().get(0).get("username");
+		System.out.println(username);
+	}
+	@Test
+	public void testMultithreadingSave() {
+		for(int i=0;i<1000;i++) {
+			   Thread  t = new Thread() {
+					@Override
+					public void run() {
+							try {
+								Map<String,Object> data = new HashMap<String,Object>();
+								data.put("id", "0");
+								data.put("username", "zhang"+getNumber());
+								setNumber(getNumber()+1);
+								session.save("hb_sys_users",data );
+								QuerySqlResult datas = session.select("select * from hb_sys_users", null);
+								String username = (String) datas.getDatas().get(0).get("username");
+								System.out.println(username);
+								System.out.println(getNumber());
+							} catch (SQLException e) {
+								e.printStackTrace();
+							}
+					}
+				};
+				t.start();
+			}
+			while(true) {
+			}
 	}
 }
