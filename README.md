@@ -23,5 +23,5 @@
 `TxSession session = tsf.getTxSession();`</br>
 ##### 第二步-> 查询SQL操作
 `QuerySqlResult datas = session.select("select * from hb_sys_users", null);`
-`System.out.println(datas.getDatas().size());` 
+`System.out.println(datas.getDatas().size());` <br/>
 tx.database.common.utils.entitys.QuerySqlResult对象是对查询结果集的封装它拥有两个属性 querySqlResultTableColumns 和 datas,datas表示查询出来的结果集,querySqlResultTableColumns表示当前结果集的列的信息,datas里面如果列的值为空的话就无法获取列名的信息了在querySqlResultTableColumns中就可以精准的控制
