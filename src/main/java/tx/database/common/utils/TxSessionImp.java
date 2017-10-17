@@ -12,6 +12,8 @@ import tx.database.common.utils.interfaces.TxSession;
 import tx.database.common.utils.ps.PreparedStatementUtils;
 /**
  * TxSession的实现类,用来操作数据库
+ * 
+ * 特别注意: 所以的操作基于当前线程的connection,如果当前线程的connection不恰当的情况下进行释放,可能引起很多问题
  * @author 张尽
  * @email  zhangjin0908@hotmail.com
  * @qq     854363956
@@ -26,34 +28,57 @@ public class TxSessionImp implements TxSession {
 		this.sessionfactory=sessionfactory;
 		this.dbt = dbt;
 	}
-	
-	@Override
-	public void save(String tablename, Map<String, Object> data) throws SQLException {
-		QuerySqlResult qrs = select(String.format("selelct 1 from %s where id=${id}", tablename),data);
-		if(qrs.getDatas().size() == 0) {
-			String sql = dbt.getInsertSql(tablename, data);
-			PreparedStatementUtils.executeUpdate(getConnection(), sql, data);
-		}else {
-			String sql = dbt.getUpdateSql(tablename, data);
-			PreparedStatementUtils.executeUpdate(getConnection(), sql, data);
+	private void releasingConnection() throws SQLException {
+		if(threadlocalTransactional.get() == null ) {
+			if(threadlocal.get() != null && !threadlocal.get().isClosed()) {
+				threadlocal.get().close();
+			}
 		}
 	}
 	@Override
+	public void save(String tablename, Map<String, Object> data) throws SQLException {
+		try {
+			QuerySqlResult qrs = select(String.format("selelct 1 from %s where id=${id}", tablename),data);
+			if(qrs.getDatas().size() == 0) {
+				String sql = dbt.getInsertSql(tablename, data);
+				PreparedStatementUtils.executeUpdate(getConnection(), sql, data);
+			}else {
+				String sql = dbt.getUpdateSql(tablename, data);
+				PreparedStatementUtils.executeUpdate(getConnection(), sql, data);
+			}
+		} finally {
+			releasingConnection();
+		}
+		
+	}
+	@Override
 	public QuerySqlResult select(String sql, Map<String, Object> parames) throws SQLException {
-		ResultSet rs = PreparedStatementUtils.executeQuery(getConnection(), sql, parames);
-		return PreparedStatementUtils.fnResultSetToQuerySqlResult(rs);
+		try {
+			ResultSet rs = PreparedStatementUtils.executeQuery(getConnection(), sql, parames);
+			return PreparedStatementUtils.fnResultSetToQuerySqlResult(rs);
+		} finally {
+			releasingConnection();
+		}
 	}
 	@Override
 	public int delete(String tablename, String id) throws SQLException {
-		Map<String,Object> parame = new HashMap<String,Object>();
-		parame.put("id", id);
-		String sql = dbt.getDeleteSql(tablename, parame);
-		return PreparedStatementUtils.executeUpdate(getConnection(), sql, parame);
+		try {
+			Map<String,Object> parame = new HashMap<String,Object>();
+			parame.put("id", id);
+			String sql = dbt.getDeleteSql(tablename, parame);
+			return PreparedStatementUtils.executeUpdate(getConnection(), sql, parame);
+		} finally {
+			releasingConnection();
+		}
 	}
 	@Override
 	public int delete(String tablename, Map<String, Object> parame) throws SQLException {
-		String sql = dbt.getDeleteSql(tablename, parame);
-		return PreparedStatementUtils.executeUpdate(getConnection(), sql, parame);
+		try {
+			String sql = dbt.getDeleteSql(tablename, parame);
+			return PreparedStatementUtils.executeUpdate(getConnection(), sql, parame);
+		} finally {
+			releasingConnection();
+		}
 	}
 	@Override
 	public Connection getConnection() throws SQLException {
@@ -84,9 +109,21 @@ public class TxSessionImp implements TxSession {
 
 	@Override
 	public QuerySqlResult selectPaging(String sql, Map<String, Object> parames, long pageSize, long pageNum) throws SQLException {
-		String s = dbt.getSelectPagingSql(sql, pageSize, pageNum);
-		ResultSet rs = PreparedStatementUtils.executeQuery(getConnection(), s, parames);
-		return PreparedStatementUtils.fnResultSetToQuerySqlResult(rs);
+		try {
+			String s = dbt.getSelectPagingSql(sql, pageSize, pageNum);
+			ResultSet rs = PreparedStatementUtils.executeQuery(getConnection(), s, parames);
+			return PreparedStatementUtils.fnResultSetToQuerySqlResult(rs);
+		} finally {
+			releasingConnection();
+		}
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		if(threadlocal.get()!=null && !threadlocal.get().isClosed()) {
+			threadlocal.get().close();
+		}
+		super.finalize();
 	}
 
 }

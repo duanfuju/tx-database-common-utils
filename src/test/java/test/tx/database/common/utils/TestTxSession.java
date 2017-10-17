@@ -35,4 +35,33 @@ public class TestTxSession {
 		QuerySqlResult datas = session.select("select * from hb_sys_users", null);
 		System.out.println(datas.getDatas().size());
 	}
+	 private int number =0;
+	 
+	synchronized public int getNumber() {
+		return number;
+	}
+	synchronized public void setNumber(int number) {
+		this.number = number;
+	}
+	@Test
+	public void testMultithreadingSelect() throws SQLException{
+		for(int i=0;i<1000;i++) {
+		   Thread  t = new Thread() {
+				@Override
+				public void run() {
+					QuerySqlResult datas;
+					try {
+						datas = session.select("select * from hb_sys_users", null);
+						System.out.println(this.getName()+":"+datas.getDatas().size());
+						setNumber(getNumber()+1);
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			t.start();
+		}
+		while(true) {
+		}
+	}
 }
